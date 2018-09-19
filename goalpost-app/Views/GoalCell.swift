@@ -17,8 +17,10 @@ class GoalCell: UITableViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
+        
     }
 
+    // Configures the cell when cretaed based on the passed in values
     func configureCell(description: String, type: GoalType, goalProgessAmount: Int) {
         
         self.goalDescriptionLbl.text = description

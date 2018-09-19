@@ -8,6 +8,7 @@
 
 import Foundation
 
+// Defining thre enum with a specific type so that we can pull out the raw value when displasying to saving to the DB
 enum GoalType: String {
     case longTerm = "Long Term"
     case shortTerm = "Short Term"
