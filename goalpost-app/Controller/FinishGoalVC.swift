@@ -31,7 +31,7 @@ class FinishGoalVC: UIViewController, UITextFieldDelegate {
     @IBAction func createGoalPressed(_ sender: Any) {
         
         // Check to make sure we have a point value before we attempt to save
-        if pointsTxt.text != nil {
+        if pointsTxt.text != nil && pointsTxt.text != "0" {
             // Call the saveToData funtion to perform the saving of the new goal to persistent storage
             self.saveToData { (complete) in
                 if complete {
@@ -45,6 +45,7 @@ class FinishGoalVC: UIViewController, UITextFieldDelegate {
 
     func initData(description: String, type: GoalType) {
 
+        // Setting the local variables for later saving to persistent storage
         self.goalDesc = description
         self.goalType = type
         
@@ -54,6 +55,7 @@ class FinishGoalVC: UIViewController, UITextFieldDelegate {
         dismissDetail()
     }
 
+    // Saves the data to persistent storage
     func saveToData(completion: (_ finished: Bool) -> ()) {
     
         // Getting the Managed Context to work with the CoreData tools

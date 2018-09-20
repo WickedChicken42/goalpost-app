@@ -15,7 +15,7 @@ class GoalsVC: UIViewController {
 
     @IBOutlet var tableView: UITableView!
     
-    // Creating an empty array
+    // Creating an empty array of type Goal to be loaded from persisten storage
     var goals: [Goal] = []
     
     override func viewDidLoad() {
@@ -31,10 +31,13 @@ class GoalsVC: UIViewController {
         tableView.dataSource = self
     }
 
+    // We fetch the data in persistent storage on this VC event and regardless of the amount of data returned reload the tableview
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
         self.fetch { (complete) in
             if complete {
+                // If we have any data returned, show/hide the tableview
                 if goals.count > 0 {
                     tableView.isHidden = false
                 } else {
@@ -85,16 +88,19 @@ extension GoalsVC: UITableViewDelegate, UITableViewDataSource {
     
 }
 
+// Creating this extension to define the fetch function that will pull our goals from persistent storage
 extension GoalsVC {
     
     func fetch(completion: (_ complete: Bool) -> ()) {
         
+        // Get the managed context for this app
         guard let managedContext = appDelegate?.persistentContainer.viewContext else { return }
-        
+       
+        // Define the request we are making as a type Goal using the entity name "Goal" from the data model
         let fetchRequest = NSFetchRequest<Goal>(entityName: "Goal")
         
         do {
-            
+            // Loading the goals array with the data retreived from storage
             goals = try managedContext.fetch(fetchRequest)
             print("Successfully fetched data.")
             completion(true)

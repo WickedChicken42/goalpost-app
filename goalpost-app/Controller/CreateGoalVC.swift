@@ -44,7 +44,7 @@ class CreateGoalVC: UIViewController, UITextViewDelegate {
             // Call the FinishGoalVC's initData function to send it the data it needs to have
             finishGoalVC.initData(description: goalTextView.text, type: goalType)
             
-            // Using the new UIViewController extension method to show our instantiated VC
+            // Calling the presentSecondaryDetail on the VC that presented this VC (presentingViewController, which is a propery of every VC
             presentingViewController?.presentSecondaryDetail(finishGoalVC)
             
         }
