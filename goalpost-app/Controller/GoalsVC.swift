@@ -14,6 +14,7 @@ let appDelegate = UIApplication.shared.delegate as? AppDelegate
 class GoalsVC: UIViewController {
 
     @IBOutlet var tableView: UITableView!
+    @IBOutlet var completionView: UIView!
     
     // Creating an empty array of type Goal to be loaded from persisten storage
     var goals: [Goal] = []
@@ -29,6 +30,7 @@ class GoalsVC: UIViewController {
         // Added to support the tableview functionality
         tableView.delegate = self
         tableView.dataSource = self
+        
     }
 
     // We fetch the data in persistent storage on this VC event and regardless of the amount of data returned reload the tableview
@@ -50,6 +52,7 @@ class GoalsVC: UIViewController {
         
     }
 
+    // Retreives the data from persistent storage and sets if the table view is hidden
     func fetchCoreDataObjects() {
         
         self.fetch { (complete) in
@@ -85,7 +88,7 @@ extension GoalsVC: UITableViewDelegate, UITableViewDataSource {
 
         let goal = goals[indexPath.row]
 
-        cell.configureCell(description: goal.goalDescription!, type: GoalType(rawValue: goal.goalType!)!, goalProgessAmount: Int(goal.goalProgress))
+        cell.configureCell(goal: goal)
         
         return cell
 
@@ -119,8 +122,18 @@ extension GoalsVC: UITableViewDelegate, UITableViewDataSource {
 
         var actions: [UITableViewRowAction] = []
         actions.append(deleteAction)
+        
+        // Define an "Add 1" action to increment the goal progress from the tableview swipe
+        let addAction = UITableViewRowAction(style: .normal, title: "ADD 1") { (rowAction, indexPath) in
+            self.setProgress(atIndexPath: indexPath)
+            tableView.reloadRows(at: [indexPath], with: .automatic)
+        }
+        addAction.backgroundColor = #colorLiteral(red: 0.9513939023, green: 0.7167944312, blue: 0.3330523372, alpha: 1)
+        actions.append(addAction)
 
         return actions
+        // Alternative way to return the action array
+        // return [deleteAction, addAction]
     }
 }
 
@@ -167,4 +180,28 @@ extension GoalsVC {
         }
     }
 
+    // Increments the goal's progress if it isn't complete
+    func setProgress(atIndexPath: IndexPath) {
+
+        // Get the managed context for this app
+        guard let managedContext = appDelegate?.persistentContainer.viewContext else { return }
+
+        // Get the goal item based on the passed in indexPath
+        let selectedGoal = goals[atIndexPath.row]
+        
+        // If we have not met our goal then increment it by 1
+        if selectedGoal.goalProgress < selectedGoal.goalCompletionValue {
+            selectedGoal.goalProgress += 1
+
+            // Save the updated progress
+            do {
+                try managedContext.save()
+                print("Successly saved progress!")
+            } catch {
+                debugPrint("Could not set progress: \(error.localizedDescription)")
+            }
+        }
+        
+    }
+    
 }

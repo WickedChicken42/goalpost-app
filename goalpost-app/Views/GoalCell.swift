@@ -13,6 +13,7 @@ class GoalCell: UITableViewCell {
     @IBOutlet var goalDescriptionLbl: UILabel!
     @IBOutlet var goalTypeLbl: UILabel!
     @IBOutlet var goalProgressLbl: UILabel!
+    @IBOutlet var completionView: UIView!
     
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -21,13 +22,18 @@ class GoalCell: UITableViewCell {
     }
 
     // Configures the cell when cretaed based on the passed in values
-    func configureCell(description: String, type: GoalType, goalProgessAmount: Int) {
+    func configureCell(goal: Goal) {
         
-        self.goalDescriptionLbl.text = description
-        self.goalTypeLbl.text = type.rawValue
+        self.goalDescriptionLbl.text = goal.goalDescription
+        self.goalTypeLbl.text = goal.goalType
         // Calling the description property on a number will return its string representation
-        self.goalProgressLbl.text = goalProgessAmount.description
-        
+        self.goalProgressLbl.text = goal.goalProgress.description
+     
+        if goal.goalProgress == goal.goalCompletionValue {
+            self.completionView.isHidden = false
+        } else {
+            self.completionView.isHidden = true
+        }
     }
     
 
