@@ -15,9 +15,11 @@ class GoalsVC: UIViewController {
 
     @IBOutlet var tableView: UITableView!
     @IBOutlet var completionView: UIView!
+    @IBOutlet var undoRemoveView: UIView!
     
     // Creating an empty array of type Goal to be loaded from persisten storage
     var goals: [Goal] = []
+    var lastDeletedGoal: MemoryGoal?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,7 +27,8 @@ class GoalsVC: UIViewController {
         // Do any additional setup after loading the view, typically from a nib.
         
         // Forcing the show of the table view while developing the UI
-        tableView.isHidden = false
+        //tableView.isHidden = false
+        undoRemoveView.isHidden = true
         
         // Added to support the tableview functionality
         tableView.delegate = self
@@ -67,6 +70,21 @@ class GoalsVC: UIViewController {
         }
 
     }
+    
+    @IBAction func undoButtonPressed(_ sender: Any) {
+        
+        // Make sure we have a undo goal to put back
+        guard let deletedGoal = self.lastDeletedGoal else {return}
+
+        undoGoal(memoryGoal: deletedGoal)
+        
+        fetchCoreDataObjects()
+        
+        tableView.reloadData()
+        
+        undoRemoveView.isHidden = true
+    }
+    
 }
 
 // Creating an extention of this VC to support the tableview implementation requirements - I LIKE THIS MUCH!!!
@@ -110,12 +128,21 @@ extension GoalsVC: UITableViewDelegate, UITableViewDataSource {
         // Define the Delete action shown when swiping on a row item
         let deleteAction = UITableViewRowAction(style: .destructive, title: "DELETE") { (rowAction, indexPath) in
             // What we will do when the Delete action is pressed (or full swiped)
+
+            // Hold onto the deleted goal item
+            self.lastDeletedGoal = MemoryGoal(dataGoal: self.goals[indexPath.row])
+            
             // Removes the goal from persistent storage
             self.removeGoal(atIndexPath: indexPath)
+            
             // Reload the local goals array from persisten storage
             self.fetchCoreDataObjects()
+
             // Remove the deleted goal from the table view
             tableView.deleteRows(at: [indexPath], with: .automatic)
+
+            // Show the undo view
+            self.undoRemoveView.isHidden = false
         }
 
         deleteAction.backgroundColor = #colorLiteral(red: 0.9254902005, green: 0.2352941185, blue: 0.1019607857, alpha: 1)
@@ -125,9 +152,15 @@ extension GoalsVC: UITableViewDelegate, UITableViewDataSource {
         
         // Define an "Add 1" action to increment the goal progress from the tableview swipe
         let addAction = UITableViewRowAction(style: .normal, title: "ADD 1") { (rowAction, indexPath) in
+            // What we will do when the ADD 1 action is pressed
+
+            // Increment the goal progress value
             self.setProgress(atIndexPath: indexPath)
+
+            // Reload the affected row in the tableview
             tableView.reloadRows(at: [indexPath], with: .automatic)
         }
+        
         addAction.backgroundColor = #colorLiteral(red: 0.9513939023, green: 0.7167944312, blue: 0.3330523372, alpha: 1)
         actions.append(addAction)
 
@@ -135,6 +168,8 @@ extension GoalsVC: UITableViewDelegate, UITableViewDataSource {
         // Alternative way to return the action array
         // return [deleteAction, addAction]
     }
+    
+    
 }
 
 // Creating this extension to define the fetch function that will pull our goals from persistent storage
@@ -204,4 +239,26 @@ extension GoalsVC {
         
     }
     
+    // Used to re-insert a previously deleted goal
+    func undoGoal(memoryGoal: MemoryGoal) {
+        
+        // Get the managed context for this app
+        guard let managedContext = appDelegate?.persistentContainer.viewContext else { return }
+        
+        let newGoal = Goal(context: managedContext)
+        memoryGoal.loadDataGoal(dataGoal: newGoal)
+        
+        // Delete the item from our managed context
+        managedContext.insert(newGoal)
+        
+        // Perform a Do/Try/Catch to save the context which will remove the deleted item from storage
+        do {
+            try managedContext.save()
+            self.lastDeletedGoal = nil
+            print("Successfully inserted a goal!")
+        } catch {
+            debugPrint("Could not insert a goal: \(error.localizedDescription)")
+        }
+    }
+
 }
